@@ -17,12 +17,19 @@ function initFirebase() {
     // File not found, try env vars
   }
 
-  // Option 2: Individual env vars (Railway - more reliable than JSON blob)
+  // Option 2: Individual env vars (Railway)
   if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    // If base64 encoded (no dashes), decode it
+    if (!privateKey.includes('-----')) {
+      privateKey = Buffer.from(privateKey, 'base64').toString('utf8');
+    } else {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        privateKey,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),
     });
