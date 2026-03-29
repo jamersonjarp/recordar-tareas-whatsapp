@@ -205,6 +205,8 @@ function initBot() {
   // In Docker/Railway, use system Chromium
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  } else if (process.platform === 'darwin') {
+    puppeteerOptions.executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   }
 
   const authDataPath = process.env.WWEBJS_AUTH_PATH || undefined;

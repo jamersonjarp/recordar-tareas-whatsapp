@@ -10,10 +10,19 @@ require('./api/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS — allow frontend from Netlify (or any origin in dev)
+const allowedOrigins = [
+  'https://recordador.netlify.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
 
 // Parse JSON bodies
