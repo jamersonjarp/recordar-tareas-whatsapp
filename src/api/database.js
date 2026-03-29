@@ -107,6 +107,7 @@ function docToTask(doc) {
     completed: data.completed || 0,
     reminded: data.reminded || 0,
     reminder_before: data.reminder_before || 0,
+    reminder_at: data.reminder_at ? data.reminder_at.toDate().toISOString() : null,
     created_at: data.created_at ? data.created_at.toDate().toISOString() : '',
   };
 }
@@ -143,8 +144,11 @@ async function createTask(phone, task, dueDate = null, dueTime = null, reminderB
 }
 
 async function getTasks(phone) {
-  const snap = await tasksCol.where('phone', '==', phone).orderBy('created_at', 'desc').get();
-  return snapToTasks(snap);
+  // Para evitar errores de índices compuestos en Firebase, ordenamos localmente
+  const snap = await tasksCol.where('phone', '==', phone).get();
+  let tasks = snapToTasks(snap);
+  tasks.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  return tasks;
 }
 
 async function getAllTasks() {
@@ -196,13 +200,11 @@ async function deleteTask(id) {
 }
 
 async function getPendingReminders() {
-  const now = admin.firestore.Timestamp.now();
-  const snap = await tasksCol
-    .where('completed', '==', 0)
-    .where('reminded', '==', 0)
-    .where('reminder_at', '<=', now)
-    .get();
-  return snapToTasks(snap);
+  const now = new Date().toISOString();
+  // Para evitar índices compuestos en Firebase, filtramos localmente
+  const snap = await tasksCol.where('completed', '==', 0).get();
+  let tasks = snapToTasks(snap);
+  return tasks.filter(t => t.reminded === 0 && t.reminder_at && t.reminder_at <= now);
 }
 
 async function markReminded(id) {
@@ -214,13 +216,16 @@ async function markReminded(id) {
 }
 
 async function getUpcomingTasks(phone) {
-  const snap = await tasksCol
-    .where('phone', '==', phone)
-    .where('completed', '==', 0)
-    .orderBy('due_date')
-    .orderBy('due_time')
-    .get();
-  return snapToTasks(snap);
+  // Para evitar índices compuestos en Firebase, filtramos y ordenamos localmente
+  const snap = await tasksCol.where('phone', '==', phone).get();
+  let tasks = snapToTasks(snap);
+  tasks = tasks.filter(t => t.completed === 0);
+  tasks.sort((a, b) => {
+    const aDate = (a.due_date || '') + (a.due_time || '');
+    const bDate = (b.due_date || '') + (b.due_time || '');
+    return aDate.localeCompare(bDate);
+  });
+  return tasks;
 }
 
 module.exports = {
