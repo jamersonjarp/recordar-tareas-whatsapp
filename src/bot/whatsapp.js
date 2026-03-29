@@ -83,7 +83,8 @@ async function handleMessage(message, client) {
   if (!body) return;
 
   console.log(`[Bot] Mensaje recibido de ${chatId}: "${body}"`);
-  const phone = chatId;
+  // Store tasks with the owner's @c.us format, not the LID
+  const phone = getOwnerChatId() || chatId;
   const parsed = parseMessage(body);
 
   // ── Crear tarea ────────────────────────────────────────────────────────

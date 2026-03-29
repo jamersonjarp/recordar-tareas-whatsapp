@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const { getPendingReminders, markReminded } = require('../api/database');
-const { botSentMessages } = require('../bot/whatsapp');
+const { botSentMessages, getOwnerChatId } = require('../bot/whatsapp');
 
 function initScheduler(whatsappClient) {
   console.log('Scheduler de recordatorios iniciado (cada minuto)');
@@ -13,6 +13,9 @@ function initScheduler(whatsappClient) {
 
       console.log(`[Scheduler] ${pending.length} recordatorio(s) pendiente(s)`);
 
+      // Always send reminders to the owner
+      const ownerChatId = getOwnerChatId();
+
       for (const task of pending) {
         const message =
           `⏰ *Recordatorio de tarea*\n\n` +
@@ -21,14 +24,14 @@ function initScheduler(whatsappClient) {
           `Responde *completar ${task.id}* para marcarla como hecha.`;
 
         try {
-          const phone = task.phone.replace(/[^0-9@.a-z]/gi, '');
-          const chatId = phone.includes('@') ? phone : phone + '@c.us';
+          // Send to owner's @c.us chat ID (not LID)
+          const chatId = ownerChatId || task.phone;
           console.log(`[Scheduler] Enviando recordatorio tarea #${task.id} a ${chatId}...`);
           const sent = await whatsappClient.sendMessage(chatId, message);
           botSentMessages.add(sent.id._serialized);
           setTimeout(() => botSentMessages.delete(sent.id._serialized), 30000);
           await markReminded(task.id);
-          console.log(`[Scheduler] Recordatorio enviado a ${task.phone} — tarea #${task.id}`);
+          console.log(`[Scheduler] Recordatorio enviado — tarea #${task.id}`);
         } catch (err) {
           console.error(`[Scheduler] Error enviando recordatorio (tarea #${task.id}):`, err.message);
           await markReminded(task.id);
