@@ -93,7 +93,7 @@ async function handleMessage(message, client) {
       return reply('⚠️ No entendí la tarea. Intenta algo como:\n_"Recuérdame que mañana tengo reunión a las 9"_');
     }
 
-    const task = createTask(phone, parsed.task, parsed.dueDate, parsed.dueTime, parsed.reminderBefore);
+    const task = await createTask(phone, parsed.task, parsed.dueDate, parsed.dueTime, parsed.reminderBefore);
 
     let msg = `✅ Tarea creada (ID: ${task.id})\n📝 *${parsed.task}*`;
     if (parsed.dueDate) {
@@ -107,7 +107,7 @@ async function handleMessage(message, client) {
 
   // ── Listar tareas ─────────────────────────────────────────────────────
   if (parsed.intent === 'list') {
-    const tasks = getUpcomingTasks(phone);
+    const tasks = await getUpcomingTasks(phone);
 
     if (tasks.length === 0) {
       return reply('📋 No tienes tareas pendientes. ¡Disfruta tu tiempo libre! 🎉');
@@ -128,7 +128,7 @@ async function handleMessage(message, client) {
     if (!parsed.taskId) {
       return reply('⚠️ Indica el ID de la tarea.\nEjemplo: _"completar 3"_');
     }
-    const success = completeTask(parsed.taskId);
+    const success = await completeTask(parsed.taskId);
     if (success) {
       return reply(`✅ Tarea #${parsed.taskId} completada. ¡Buen trabajo! 💪`);
     }
@@ -140,7 +140,7 @@ async function handleMessage(message, client) {
     if (!parsed.taskId) {
       return reply('⚠️ Indica el ID de la tarea.\nEjemplo: _"eliminar 3"_');
     }
-    const success = deleteTask(parsed.taskId);
+    const success = await deleteTask(parsed.taskId);
     if (success) {
       return reply(`🗑️ Tarea #${parsed.taskId} eliminada.`);
     }
@@ -170,7 +170,7 @@ async function handleMessage(message, client) {
 
   // ── Si detectó fecha/tarea pero intent fue unknown, intentar crear ────
   if (parsed.intent === 'unknown' && parsed.task && parsed.dueDate) {
-    const task = createTask(phone, parsed.task, parsed.dueDate, parsed.dueTime, parsed.reminderBefore);
+    const task = await createTask(phone, parsed.task, parsed.dueDate, parsed.dueTime, parsed.reminderBefore);
     let msg = `✅ Tarea creada (ID: ${task.id})\n📝 *${parsed.task}*`;
     if (parsed.dueDate) {
       msg += `\n📅 ${formatDate(parsed.dueDate, parsed.dueTime)}`;
