@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recordar Tareas WhatsApp</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <h1>📋 Recordar Tareas WhatsApp</h1>
+      <div class="header-actions">
+        <span class="refresh-indicator" id="refreshIndicator"></span>
+        <button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
+        <button class="btn btn-test" id="btnTest">🧪 Prueba</button>
+        <button class="btn btn-primary" id="btnNewTask">+ Nueva Tarea</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar tareas...">
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">Todas</button>
+      <button class="filter-tab" data-filter="pending">Pendientes</button>
+      <button class="filter-tab" data-filter="completed">Completadas</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <span class="stat-chip">Total: <span class="num" id="statTotal">0</span></span>
+    <span class="stat-chip">Pendientes: <span class="num" id="statPending">0</span></span>
+    <span class="stat-chip">Completadas: <span class="num" id="statCompleted">0</span></span>
+  </div>
+
+  <!-- Task Grid -->
+  <div class="task-grid" id="taskGrid">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Cargando tareas...</span>
+    </div>
+  </div>
+
+  <!-- Modal: New Task -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nueva Tarea</h2>
+        <button class="btn-icon" id="modalClose" title="Cerrar">&times;</button>
+      </div>
+      <form id="taskForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="taskName">Evento *</label>
+            <input type="text" id="taskName" placeholder="Ej: Reunion, Ir al gym, Tomar pastilla..." required>
+          </div>
+          <div class="form-group">
+            <label for="taskPhone">Telefono (WhatsApp) *</label>
+            <input type="tel" id="taskPhone" placeholder="Ej: +573001234567" required>
+          </div>
+          <div class="form-group">
+            <label for="taskDateText">Fecha y hora del evento *</label>
+            <input type="text" id="taskDateText" placeholder="Ej: Dentro de 30 minutos, Mañana a las 10am..." autocomplete="off">
+            <div class="date-preview" id="datePreview" style="display:none">
+              <span class="icon">📅</span> <span id="datePreviewText"></span>
+            </div>
+            <div class="date-fallback">
+              <span class="date-fallback-label">o selecciona directamente:</span>
+              <input type="datetime-local" id="taskDate">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="taskReminder">Recordatorio</label>
+            <select id="taskReminder">
+              <option value="0">Sin recordatorio (al momento del evento)</option>
+              <option value="5">5 minutos antes</option>
+              <option value="10">10 minutos antes</option>
+              <option value="15" selected>15 minutos antes</option>
+              <option value="30">30 minutos antes</option>
+              <option value="60">1 hora antes</option>
+              <option value="120">2 horas antes</option>
+              <option value="360">6 horas antes</option>
+              <option value="720">12 horas antes</option>
+              <option value="1440">1 dia antes</option>
+              <option value="custom">Personalizado...</option>
+            </select>
+            <div class="custom-reminder" id="customReminderBox" style="display:none">
+              <input type="number" id="customReminderVal" min="1" max="10080" value="30" style="width:80px">
+              <select id="customReminderUnit">
+                <option value="1">minutos</option>
+                <option value="60">horas</option>
+                <option value="1440">dias</option>
+              </select>
+              <span style="color:var(--text-secondary);font-size:0.8rem"> antes del evento</span>
+            </div>
+            <div class="reminder-preview" id="reminderPreview" style="display:none">
+              <span class="icon">⏰</span> <span id="reminderPreviewText"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="taskDescription">Detalle del evento (opcional)</label>
+            <textarea id="taskDescription" rows="3" placeholder="Ej: Reunion con mi socio en el cafe..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="modalCancel" style="color:var(--text-secondary)">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Tarea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chat Simulator Overlay -->
+  <div class="chat-overlay" id="chatOverlay">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <span class="chat-avatar">🤖</span>
+          <div>
+            <div class="chat-header-title">🧪 Simulador de Bot</div>
+            <div class="chat-header-status">en linea</div>
+          </div>
+        </div>
+        <div class="chat-header-actions">
+          <label class="debug-label" for="debugToggle">
+            <input type="checkbox" id="debugToggle"> Debug
+          </label>
+          <button class="chat-close-btn" id="chatClose">&times;</button>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Escribe un mensaje..." autocomplete="off">
+        <button class="chat-send-btn" id="chatSend">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.239 1.816-13.239 1.817-.011 7.912z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+<script src="config.js"></script>
+<script>
+/* =============================================
+   Recordar Tareas WhatsApp — Dashboard JS
+   ============================================= */
+
+(() => {
+  'use strict';
+
+  // --- State ---
+  let tasks = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
+  let refreshTimer = null;
+
+  // --- DOM Refs ---
+  const $ = (sel) => document.querySelector(sel);
+  const taskGrid = $('#taskGrid');
+  const searchInput = $('#searchInput');
+  const modalOverlay = $('#modalOverlay');
+  const taskForm = $('#taskForm');
+  const themeToggle = $('#themeToggle');
+  const refreshIndicator = $('#refreshIndicator');
+
+  // ========================
+  //  API Helpers
+  // ========================
+  const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || '/api';
+
+  async function apiGet(path) {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+  }
+
+  async function apiPost(path, body) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+  }
+
+  async function apiPut(path, body) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+  }
+
+  async function apiDelete(path) {
+    const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+  }
+
+  // ========================
+  //  Toast Notifications
+  // ========================
+  function showToast(message, type = 'success') {
+    const container = $('#toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 250);
+    }, 3000);
+  }
+
+  // ========================
+  //  Theme
+  // ========================
+  function initTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    themeToggle.textContent = saved === 'dark' ? '☀️' : '🌙';
+  }
+
+  themeToggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+  });
+
+  // ========================
+  //  Formatting Helpers
+  // ========================
+  function formatDate(dateStr, timeStr) {
+    if (!dateStr) return 'Sin fecha';
+    const [y, m, d] = dateStr.split('-');
+    let str = `${d}/${m}/${y}`;
+    if (timeStr) str += ` ${timeStr}`;
+    return str;
+  }
+
+  function isOverdue(dateStr, timeStr, status) {
+    if (!dateStr || status === 'completed') return false;
+    const dt = new Date(`${dateStr}T${timeStr || '23:59'}`);
+    return dt < new Date();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ========================
+  //  Render
+  // ========================
+  function getFilteredTasks() {
+    let filtered = [...tasks];
+
+    // Status filter
+    if (currentFilter === 'pending') {
+      filtered = filtered.filter(t => t.status !== 'completed');
+    } else if (currentFilter === 'completed') {
+      filtered = filtered.filter(t => t.status === 'completed');
+    }
+
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(t =>
+        (t.name || '').toLowerCase().includes(q) ||
+        (t.description || '').toLowerCase().includes(q) ||
+        (t.phone || '').toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  }
+
+  function updateStats() {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const pending = total - completed;
+    $('#statTotal').textContent = total;
+    $('#statPending').textContent = pending;
+    $('#statCompleted').textContent = completed;
+  }
+
+  function renderTasks() {
+    const filtered = getFilteredTasks();
+    updateStats();
+
+    if (filtered.length === 0) {
+      const isSearch = searchQuery || currentFilter !== 'all';
+      taskGrid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">${isSearch ? '🔍' : '📭'}</div>
+          <p>${isSearch ? 'No se encontraron tareas' : 'No hay tareas todavia'}</p>
+          <p class="sub">${isSearch ? 'Intenta con otros filtros' : 'Crea tu primera tarea con el boton de arriba'}</p>
+        </div>`;
+      return;
+    }
+
+    taskGrid.innerHTML = filtered.map(task => {
+      const isComp = task.status === 'completed';
+      const overdue = isOverdue(task.dueDate, task.dueTime, task.status);
+      const phone = task.phone || '';
+      const desc = task.description || '';
+      const rb = task.reminderBefore || 0;
+
+      let reminderLabel = '';
+      if (rb > 0) {
+        if (rb >= 1440) reminderLabel = `${rb / 1440} dia(s) antes`;
+        else if (rb >= 60) reminderLabel = `${rb / 60}h antes`;
+        else reminderLabel = `${rb} min antes`;
+      }
+
+      // Calculate reminder time for display
+      let reminderTimeStr = '';
+      if (rb > 0 && task.dueDate && task.dueTime) {
+        const [rh, rm] = task.dueTime.split(':').map(Number);
+        const eventDt = new Date(`${task.dueDate}T${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}:00`);
+        const reminderDt = new Date(eventDt.getTime() - rb * 60000);
+        reminderTimeStr = ` (${String(reminderDt.getDate()).padStart(2,'0')}/${String(reminderDt.getMonth()+1).padStart(2,'0')} ${String(reminderDt.getHours()).padStart(2,'0')}:${String(reminderDt.getMinutes()).padStart(2,'0')})`;
+      }
+
+      return `
+        <div class="task-card ${isComp ? 'completed' : ''}">
+          <div class="task-card-header">
+            <span class="task-name">${escapeHtml(task.name)}</span>
+            <span class="badge ${isComp ? 'badge-completed' : 'badge-pending'}">
+              ${isComp ? '✓ Completada' : '⏳ Pendiente'}
+            </span>
+          </div>
+          ${desc ? `<div class="task-description">${escapeHtml(desc)}</div>` : ''}
+          <div class="task-meta">
+            <div class="task-meta-item">
+              <span class="icon">📱</span>
+              <span>${escapeHtml(phone)}</span>
+            </div>
+            <div class="task-meta-item ${overdue ? 'overdue' : ''}">
+              <span class="icon">📅</span>
+              <span>Evento: ${formatDate(task.dueDate, task.dueTime)}${overdue ? ' (vencida)' : ''}</span>
+            </div>
+            ${rb > 0 ? `
+            <div class="task-meta-item reminder-info">
+              <span class="icon">⏰</span>
+              <span>Recordatorio: ${reminderLabel}${reminderTimeStr}</span>
+            </div>` : ''}
+          </div>
+          <div class="task-actions">
+            ${!isComp ? `<button class="btn-icon edit" title="Editar" onclick="app.editTask('${task.id || task._id}')">✎</button>` : ''}
+            ${!isComp ? `<button class="btn-icon success" title="Marcar completada" onclick="app.completeTask('${task.id || task._id}')">✓</button>` : ''}
+            <button class="btn-icon danger" title="Eliminar" onclick="app.deleteTask('${task.id || task._id}')">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ========================
+  //  Data Loading
+  // ========================
+  function normalizeTask(t) {
+    return {
+      id: t.id,
+      name: t.task || t.name || '',
+      phone: t.phone || '',
+      dueDate: t.due_date || t.dueDate || null,
+      dueTime: t.due_time || t.dueTime || null,
+      reminderBefore: t.reminder_before || t.reminderBefore || 0,
+      status: t.completed ? 'completed' : 'pending',
+      description: t.description || '',
+      created_at: t.created_at || '',
+    };
+  }
+
+  async function loadTasks() {
+    try {
+      const data = await apiGet('/tasks');
+      const raw = Array.isArray(data) ? data : (data.tasks || []);
+      tasks = raw.map(normalizeTask);
+      renderTasks();
+    } catch (err) {
+      console.error('Error loading tasks:', err);
+      // Keep existing tasks on error, just show a toast if we had none
+      if (tasks.length === 0) {
+        taskGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">⚠️</div>
+            <p>No se pudo conectar con el servidor</p>
+            <p class="sub">Verifica que el servidor este corriendo</p>
+          </div>`;
+      }
+    }
+    updateRefreshTime();
+  }
+
+  function updateRefreshTime() {
+    const now = new Date();
+    refreshIndicator.textContent = `Actualizado ${now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // ========================
+  //  Actions
+  // ========================
+  async function completeTask(id) {
+    try {
+      await apiPut(`/tasks/${id}/complete`);
+      showToast('Tarea completada');
+      await loadTasks();
+    } catch (err) {
+      showToast('Error al completar la tarea', 'error');
+    }
+  }
+
+  async function deleteTask(id) {
+    if (!confirm('¿Seguro que quieres eliminar esta tarea?')) return;
+    try {
+      await apiDelete(`/tasks/${id}`);
+      showToast('Tarea eliminada');
+      await loadTasks();
+    } catch (err) {
+      showToast('Error al eliminar la tarea', 'error');
+    }
+  }
+
+  async function createTask(data) {
+    try {
+      await apiPost('/tasks', data);
+      showToast('Tarea creada');
+      closeModal();
+      await loadTasks();
+    } catch (err) {
+      showToast('Error al crear la tarea', 'error');
+    }
+  }
+
+  async function updateTask(id, data) {
+    try {
+      await apiPut(`/tasks/${id}`, data);
+      showToast('Tarea actualizada');
+      closeModal();
+      await loadTasks();
+    } catch (err) {
+      showToast('Error al actualizar la tarea', 'error');
+    }
+  }
+
+  // ========================
+  //  Modal
+  // ========================
+  // --- Natural language date parsing (client-side, mirrors parser.js logic) ---
+  function parseNaturalDate(text) {
+    const lower = text.toLowerCase().trim();
+    if (!lower) return null;
+
+    const now = new Date();
+    const pad2 = n => String(n).padStart(2, '0');
+    const fmtD = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    const fmtT = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+    let resultDate = null;
+    let resultTime = null;
+
+    // --- Relative: "dentro de X minutos/horas", "en X minutos/horas" ---
+    let m = lower.match(/(?:dentro\s+de|en)\s+(\d+)\s+(minutos?|horas?)/);
+    if (m) {
+      const d = new Date(now);
+      if (/hora/.test(m[2])) d.setHours(d.getHours() + parseInt(m[1]));
+      else d.setMinutes(d.getMinutes() + parseInt(m[1]));
+      return { date: fmtD(d), time: fmtT(d), display: `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${fmtT(d)}` };
+    }
+
+    m = lower.match(/(?:dentro\s+de|en)\s+media\s+hora/);
+    if (m) {
+      const d = new Date(now); d.setMinutes(d.getMinutes() + 30);
+      return { date: fmtD(d), time: fmtT(d), display: `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${fmtT(d)}` };
+    }
+
+    m = lower.match(/(?:dentro\s+de|en)\s+una\s+hora/);
+    if (m) {
+      const d = new Date(now); d.setHours(d.getHours() + 1);
+      return { date: fmtD(d), time: fmtT(d), display: `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${fmtT(d)}` };
+    }
+
+    // --- Date part ---
+    if (/pasado\s+ma[nñ]ana/.test(lower)) {
+      const d = new Date(now); d.setDate(d.getDate()+2); resultDate = fmtD(d);
+    } else if (/\bma[nñ]ana\b/.test(lower)) {
+      const d = new Date(now); d.setDate(d.getDate()+1); resultDate = fmtD(d);
+    } else if (/\bhoy\b/.test(lower)) {
+      resultDate = fmtD(now);
+    } else {
+      const ddmm = lower.match(/(\d{1,2})\/(\d{1,2})/);
+      if (ddmm) {
+        const day = parseInt(ddmm[1]); const month = parseInt(ddmm[2])-1;
+        let year = now.getFullYear();
+        if (new Date(year, month, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
+        resultDate = `${year}-${pad2(month+1)}-${pad2(day)}`;
+      }
+    }
+
+    // --- Time part ---
+    m = lower.match(/a\s+las?\s+(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+    if (m) {
+      let h = parseInt(m[1]);
+      if (m[3] && m[3].toLowerCase() === 'pm' && h < 12) h += 12;
+      if (m[3] && m[3].toLowerCase() === 'am' && h === 12) h = 0;
+      resultTime = `${pad2(h)}:${m[2]}`;
+    }
+    if (!resultTime) {
+      m = lower.match(/a\s+las?\s+(\d{1,2})\s*(am|pm)/i);
+      if (m) {
+        let h = parseInt(m[1]);
+        if (m[2].toLowerCase() === 'pm' && h < 12) h += 12;
+        if (m[2].toLowerCase() === 'am' && h === 12) h = 0;
+        resultTime = `${pad2(h)}:00`;
+      }
+    }
+    if (!resultTime) {
+      m = lower.match(/(\d{1,2})\s+de\s+la\s+(ma[nñ]ana|tarde|noche)/i);
+      if (m) {
+        let h = parseInt(m[1]);
+        const p = m[2].toLowerCase().replace('ñ','n');
+        if ((p === 'tarde' || p === 'noche') && h < 12) h += 12;
+        resultTime = `${pad2(h)}:00`;
+      }
+    }
+    if (!resultTime) {
+      m = lower.match(/a\s+las?\s+(\d{1,2})(?!\s*[:\d])/i);
+      if (m) resultTime = `${pad2(parseInt(m[1]))}:00`;
+    }
+    if (!resultTime) {
+      m = lower.match(/\b(\d{1,2})\s*(am|pm)\b/i);
+      if (m) {
+        let h = parseInt(m[1]);
+        if (m[2].toLowerCase() === 'pm' && h < 12) h += 12;
+        if (m[2].toLowerCase() === 'am' && h === 12) h = 0;
+        resultTime = `${pad2(h)}:00`;
+      }
+    }
+    if (!resultTime) {
+      m = lower.match(/\b(\d{1,2}):(\d{2})\b/);
+      if (m) resultTime = `${pad2(parseInt(m[1]))}:${m[2]}`;
+    }
+
+    if (!resultDate && !resultTime) return null;
+
+    // Default date to today if only time given
+    if (resultTime && !resultDate) resultDate = fmtD(now);
+    // Default time if only date given
+    if (resultDate && !resultTime) resultTime = fmtT(now);
+
+    const [y,mo,dy] = resultDate.split('-');
+    return { date: resultDate, time: resultTime, display: `${dy}/${mo}/${y} ${resultTime}` };
+  }
+
+  // --- Reminder preview ---
+  function updateReminderPreview() {
+    const reminderSelect = $('#taskReminder');
+    const customBox = $('#customReminderBox');
+    const preview = $('#reminderPreview');
+    const previewText = $('#reminderPreviewText');
+
+    if (reminderSelect.value === 'custom') {
+      customBox.style.display = 'flex';
+    } else {
+      customBox.style.display = 'none';
+    }
+
+    const rb = getReminderMinutes();
+    if (rb <= 0) { preview.style.display = 'none'; return; }
+
+    // Try to compute the actual reminder datetime
+    let eventDate = null;
+    const dateText = $('#taskDateText').value.trim();
+    const parsed = dateText ? parseNaturalDate(dateText) : null;
+    if (parsed) {
+      eventDate = new Date(`${parsed.date}T${parsed.time}:00`);
+    } else if ($('#taskDate').value) {
+      eventDate = new Date($('#taskDate').value);
+    }
+
+    if (eventDate && !isNaN(eventDate.getTime())) {
+      const reminderDt = new Date(eventDate.getTime() - rb * 60000);
+      const pad2 = n => String(n).padStart(2, '0');
+      previewText.textContent = `Te recordaremos el ${pad2(reminderDt.getDate())}/${pad2(reminderDt.getMonth()+1)}/${reminderDt.getFullYear()} a las ${pad2(reminderDt.getHours())}:${pad2(reminderDt.getMinutes())}`;
+      preview.style.display = 'flex';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  function getReminderMinutes() {
+    const sel = $('#taskReminder').value;
+    if (sel === 'custom') {
+      const val = parseInt($('#customReminderVal').value) || 0;
+      const unit = parseInt($('#customReminderUnit').value) || 1;
+      return val * unit;
+    }
+    return parseInt(sel) || 0;
+  }
+
+  function openModal() {
+    editingTaskId = null;
+    taskForm.reset();
+    $('#taskReminder').value = '15';
+    $('#customReminderBox').style.display = 'none';
+    $('#datePreview').style.display = 'none';
+    $('#reminderPreview').style.display = 'none';
+    // Default date picker to now + 1 hour
+    const d = new Date();
+    d.setHours(d.getHours() + 1, 0, 0, 0);
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    $('#taskDate').value = iso;
+    // Auto-fill phone with bot number
+    if (botPhoneNumber) $('#taskPhone').value = botPhoneNumber;
+    // Reset modal title and button
+    $('.modal-header h2').textContent = 'Nueva Tarea';
+    $('button[type="submit"]').textContent = 'Crear Tarea';
+    modalOverlay.classList.add('open');
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+  }
+
+  $('#btnNewTask').addEventListener('click', openModal);
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#modalCancel').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  // Natural language date input → preview + sync picker
+  let dateDebounce = null;
+  $('#taskDateText').addEventListener('input', () => {
+    clearTimeout(dateDebounce);
+    dateDebounce = setTimeout(() => {
+      const text = $('#taskDateText').value.trim();
+      const preview = $('#datePreview');
+      const previewText = $('#datePreviewText');
+      if (!text) { preview.style.display = 'none'; updateReminderPreview(); return; }
+      const parsed = parseNaturalDate(text);
+      if (parsed) {
+        previewText.textContent = parsed.display;
+        preview.style.display = 'flex';
+        // Sync to datetime picker
+        const iso = `${parsed.date}T${parsed.time}`;
+        $('#taskDate').value = iso;
+      } else {
+        previewText.textContent = 'No se reconocio la fecha. Usa el selector de abajo.';
+        preview.style.display = 'flex';
+      }
+      updateReminderPreview();
+    }, 300);
+  });
+
+  // When datetime picker changes, update reminder preview too
+  $('#taskDate').addEventListener('change', updateReminderPreview);
+  $('#taskReminder').addEventListener('change', updateReminderPreview);
+  $('#customReminderVal').addEventListener('input', updateReminderPreview);
+  $('#customReminderUnit').addEventListener('change', updateReminderPreview);
+
+  taskForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Resolve event date: prefer natural language parse, fallback to picker
+    let dueDate, dueTime;
+    const dateText = $('#taskDateText').value.trim();
+    const parsed = dateText ? parseNaturalDate(dateText) : null;
+
+    if (parsed) {
+      dueDate = parsed.date;
+      dueTime = parsed.time;
+    } else if ($('#taskDate').value) {
+      const dateVal = new Date($('#taskDate').value);
+      dueDate = `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
+      dueTime = `${String(dateVal.getHours()).padStart(2, '0')}:${String(dateVal.getMinutes()).padStart(2, '0')}`;
+    } else {
+      showToast('Debes indicar la fecha y hora del evento', 'error');
+      return;
+    }
+
+    const reminderBefore = getReminderMinutes();
+
+    const data = {
+      task: $('#taskName').value.trim(),
+      phone: $('#taskPhone').value.trim(),
+      dueDate,
+      dueTime,
+      reminderBefore,
+      description: ($('#taskDescription').value || '').trim(),
+    };
+    if (!data.task || !data.phone) return;
+
+    if (editingTaskId) {
+      updateTask(editingTaskId, data);
+    } else {
+      createTask(data);
+    }
+  });
+
+  // Close modal on Escape (chat Escape is handled separately below)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal();
+  });
+
+  // ========================
+  //  Filters & Search
+  // ========================
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderTasks();
+    });
+  });
+
+  let searchDebounce = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      searchQuery = searchInput.value.trim();
+      renderTasks();
+    }, 250);
+  });
+
+  // ========================
+  //  Auto-Refresh (30s)
+  // ========================
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(loadTasks, 30000);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+  }
+
+  // Pause auto-refresh when tab is hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoRefresh();
+    } else {
+      loadTasks();
+      startAutoRefresh();
+    }
+  });
+
+  // ========================
+  //  Public API (for onclick handlers)
+  // ========================
+  // ========================
+  //  Edit Task
+  // ========================
+  let editingTaskId = null;
+
+  function editTask(id) {
+    const task = tasks.find(t => String(t.id) === String(id));
+    if (!task) return;
+
+    editingTaskId = id;
+    taskForm.reset();
+
+    // Fill form with existing data
+    $('#taskName').value = task.name || '';
+    $('#taskPhone').value = task.phone || '';
+    $('#taskDescription').value = task.description || '';
+
+    // Set date/time in picker
+    if (task.dueDate && task.dueTime) {
+      $('#taskDate').value = `${task.dueDate}T${task.dueTime}`;
+      $('#taskDateText').value = '';
+    } else if (task.dueDate) {
+      $('#taskDate').value = `${task.dueDate}T00:00`;
+      $('#taskDateText').value = '';
+    }
+
+    // Set reminder
+    const rb = task.reminderBefore || 0;
+    const select = $('#taskReminder');
+    const matchOption = [...select.options].find(o => o.value !== 'custom' && parseInt(o.value) === rb);
+    if (matchOption) {
+      select.value = matchOption.value;
+      $('#customReminderBox').style.display = 'none';
+    } else if (rb > 0) {
+      select.value = 'custom';
+      // Determine best unit
+      if (rb >= 1440 && rb % 1440 === 0) {
+        $('#customReminderVal').value = rb / 1440;
+        $('#customReminderUnit').value = '1440';
+      } else if (rb >= 60 && rb % 60 === 0) {
+        $('#customReminderVal').value = rb / 60;
+        $('#customReminderUnit').value = '60';
+      } else {
+        $('#customReminderVal').value = rb;
+        $('#customReminderUnit').value = '1';
+      }
+      $('#customReminderBox').style.display = 'flex';
+    } else {
+      select.value = '0';
+      $('#customReminderBox').style.display = 'none';
+    }
+
+    // Update modal title and button
+    $('.modal-header h2').textContent = 'Editar Tarea';
+    $('button[type="submit"]').textContent = 'Guardar Cambios';
+
+    $('#datePreview').style.display = 'none';
+    updateReminderPreview();
+    modalOverlay.classList.add('open');
+  }
+
+  window.app = { completeTask, deleteTask, editTask };
+
+  // ========================
+  //  Chat Simulator
+  // ========================
+  const chatOverlay = $('#chatOverlay');
+  const chatMessages = $('#chatMessages');
+  const chatInput = $('#chatInput');
+  const chatSendBtn = $('#chatSend');
+  const debugToggle = $('#debugToggle');
+
+  function chatTimeNow() {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function addChatBubble(text, type, debugData) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `chat-bubble-wrapper ${type}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${type}`;
+
+    const msgText = document.createElement('span');
+    msgText.className = 'chat-text';
+    msgText.innerHTML = text.replace(/\n/g, '<br>').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>');
+    bubble.appendChild(msgText);
+
+    const time = document.createElement('span');
+    time.className = 'time';
+    time.textContent = chatTimeNow();
+    bubble.appendChild(time);
+
+    wrapper.appendChild(bubble);
+
+    if (type === 'bot' && debugData) {
+      const debugBox = document.createElement('div');
+      debugBox.className = 'chat-debug';
+      debugBox.style.display = debugToggle.checked ? 'block' : 'none';
+      debugBox.textContent = JSON.stringify(debugData, null, 2);
+      wrapper.appendChild(debugBox);
+    }
+
+    chatMessages.appendChild(wrapper);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  let reminderTimer = null;
+
+  function openChat() {
+    chatOverlay.classList.add('open');
+    if (chatMessages.children.length === 0) {
+      addChatBubble('🤖 ¡Hola! Soy tu asistente de tareas. Escribe algo para probar, por ejemplo:\n\n_Recuerdame que manana tengo reunion a las 9_', 'bot');
+    }
+    setTimeout(() => chatInput.focus(), 100);
+    // Iniciar chequeo de recordatorios cada 15 segundos
+    checkReminders();
+    reminderTimer = setInterval(checkReminders, 15000);
+  }
+
+  function closeChat() {
+    chatOverlay.classList.remove('open');
+    if (reminderTimer) { clearInterval(reminderTimer); reminderTimer = null; }
+  }
+
+  async function checkReminders() {
+    try {
+      const res = await fetch(`${API_BASE}/simulate/reminders`);
+      const data = await res.json();
+      if (data.reminders && data.reminders.length > 0) {
+        for (const msg of data.reminders) {
+          addChatBubble(msg, 'bot');
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  async function sendChatMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    chatInput.value = '';
+    addChatBubble(text, 'user');
+
+    // Show typing indicator
+    const typingWrapper = document.createElement('div');
+    typingWrapper.className = 'chat-bubble-wrapper bot';
+    const typingBubble = document.createElement('div');
+    typingBubble.className = 'chat-bubble bot typing';
+    typingBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+    typingWrapper.appendChild(typingBubble);
+    chatMessages.appendChild(typingWrapper);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      const res = await fetch(`${API_BASE}/simulate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      typingWrapper.remove();
+
+      const botText = data.response || data.reply || data.message || JSON.stringify(data);
+      const debugData = data.parsed || data.debug || {
+        intent: data.intent,
+        dueDate: data.dueDate || data.due_date,
+        dueTime: data.dueTime || data.due_time,
+        reminderBefore: data.reminderBefore || data.reminder_before,
+        taskId: data.taskId || data.task_id,
+      };
+
+      addChatBubble(botText, 'bot', debugData);
+    } catch (err) {
+      typingWrapper.remove();
+      addChatBubble('⚠️ Error al conectar con el servidor. Verifica que este corriendo.', 'bot');
+    }
+  }
+
+  $('#btnTest').addEventListener('click', openChat);
+  $('#chatClose').addEventListener('click', closeChat);
+  chatOverlay.addEventListener('click', (e) => {
+    if (e.target === chatOverlay) closeChat();
+  });
+
+  chatSendBtn.addEventListener('click', sendChatMessage);
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage();
+    }
+  });
+
+  debugToggle.addEventListener('change', () => {
+    const show = debugToggle.checked;
+    chatMessages.querySelectorAll('.chat-debug').forEach(el => {
+      el.style.display = show ? 'block' : 'none';
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && chatOverlay.classList.contains('open')) closeChat();
+  });
+
+  // ========================
+  //  Init
+  // ========================
+  initTheme();
+  loadTasks();
+  startAutoRefresh();
+
+  // Load bot number for auto-filling phone field
+  let botPhoneNumber = '';
+  (async () => {
+    try {
+      const data = await apiGet('/bot-number');
+      if (data.number) {
+        botPhoneNumber = data.number;
+        // Set as default value for phone field
+        const phoneInput = $('#taskPhone');
+        if (!phoneInput.value) phoneInput.value = botPhoneNumber;
+      }
+    } catch (e) { /* ignore */ }
+  })();
+
+})();
+</script>
+
+</body>
+</html>
