@@ -220,6 +220,12 @@ function initBot() {
     console.log('║  Escanea este QR con el SEGUNDO numero       ║');
     console.log('║  (el numero del bot, NO tu numero personal)  ║');
     console.log('╚══════════════════════════════════════════════╝\n');
+    
+    // Generar un link para verlo limpio fuera de la consola
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+    console.log('⚠️ SI EL QR DE ABAJO SE VE DEFORME, ABRE ESTE ENLACE EN TU NAVEGADOR PARA ESCANEARLO:');
+    console.log('👉 ' + qrImageUrl + '\n');
+
     qrcode.generate(qr, { small: true });
   });
 
