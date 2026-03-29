@@ -211,6 +211,17 @@ function initBot() {
   }
 
   const authDataPath = process.env.WWEBJS_AUTH_PATH || undefined;
+
+  // Cleanup lingering Chromium locks from previous dirty shutdowns (common with persistent volumes in containers)
+  try {
+    const { execSync } = require('child_process');
+    const pathToCheck = authDataPath || './.wwebjs_auth';
+    console.log(`[Bot] Verificando locks en volumen persistente: ${pathToCheck}`);
+    execSync(`find ${pathToCheck} -name "SingletonLock" -delete 2>/dev/null || true`);
+  } catch (err) {
+    // Ignorar si el comando find falla
+  }
+
   const client = new Client({
     authStrategy: new LocalAuth({ dataPath: authDataPath }),
     puppeteer: puppeteerOptions,
