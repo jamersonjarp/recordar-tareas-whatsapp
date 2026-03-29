@@ -239,8 +239,14 @@ function initBot() {
   // Escuchar TODOS los mensajes entrantes
   client.on('message', async (message) => {
     try {
+      // DEBUG: log ALL incoming messages
+      console.log(`[DEBUG] message event — from: ${message.from}, type: ${message.type}, body: "${(message.body || '').substring(0, 50)}"`);
+
       // Solo procesar mensajes del dueño (tu numero personal)
-      if (message.from !== ownerChatId) return;
+      if (message.from !== ownerChatId) {
+        console.log(`[DEBUG] Ignorado: ${message.from} !== ${ownerChatId}`);
+        return;
+      }
 
       // Ignorar mensajes del bot
       if (botSentMessages.has(message.id._serialized)) return;
