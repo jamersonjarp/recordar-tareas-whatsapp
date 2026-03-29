@@ -5,26 +5,48 @@ const path = require('path');
 // Firebase initialization
 // ---------------------------------------------------------------------------
 
-const keyPath = process.env.FIREBASE_KEY_PATH || path.join(__dirname, '..', '..', 'firebase-key.json');
-
-try {
-  const serviceAccount = require(keyPath);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-} catch (err) {
-  // If running on Railway with env var, use inline JSON
-  if (process.env.FIREBASE_CONFIG) {
-    const config = JSON.parse(process.env.FIREBASE_CONFIG);
-    admin.initializeApp({
-      credential: admin.credential.cert(config),
-    });
-  } else {
-    console.error('Firebase: No se encontró firebase-key.json ni FIREBASE_CONFIG env var');
-    console.error('Descarga la clave desde: Firebase Console → Configuración → Cuentas de servicio');
-    process.exit(1);
+function initFirebase() {
+  // Option 1: firebase-key.json file (local dev)
+  const keyPath = process.env.FIREBASE_KEY_PATH || path.join(__dirname, '..', '..', 'firebase-key.json');
+  try {
+    const serviceAccount = require(keyPath);
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    console.log('Firebase: inicializado con firebase-key.json');
+    return;
+  } catch (err) {
+    // File not found, try env vars
   }
+
+  // Option 2: Individual env vars (Railway - more reliable than JSON blob)
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      }),
+    });
+    console.log('Firebase: inicializado con variables de entorno');
+    return;
+  }
+
+  // Option 3: FIREBASE_CONFIG JSON blob
+  if (process.env.FIREBASE_CONFIG) {
+    try {
+      const config = JSON.parse(process.env.FIREBASE_CONFIG);
+      admin.initializeApp({ credential: admin.credential.cert(config) });
+      console.log('Firebase: inicializado con FIREBASE_CONFIG');
+      return;
+    } catch (e) {
+      console.error('Firebase: FIREBASE_CONFIG JSON inválido:', e.message);
+    }
+  }
+
+  console.error('Firebase: No se encontró configuración. Usa firebase-key.json o variables FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL');
+  process.exit(1);
 }
+
+initFirebase();
 
 const db = admin.firestore();
 const tasksCol = db.collection('tasks');
