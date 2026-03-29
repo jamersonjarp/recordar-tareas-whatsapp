@@ -239,12 +239,31 @@ function initBot() {
   // Escuchar TODOS los mensajes entrantes
   client.on('message', async (message) => {
     try {
-      // DEBUG: log ALL incoming messages
-      console.log(`[DEBUG] message event — from: ${message.from}, type: ${message.type}, body: "${(message.body || '').substring(0, 50)}"`);
+      console.log(`[Bot] Mensaje recibido — from: ${message.from}, type: ${message.type}, body: "${(message.body || '').substring(0, 50)}"`);
 
-      // Solo procesar mensajes del dueño (tu numero personal)
-      if (message.from !== ownerChatId) {
-        console.log(`[DEBUG] Ignorado: ${message.from} !== ${ownerChatId}`);
+      // Ignorar mensajes de grupos
+      if (message.from.endsWith('@g.us')) return;
+
+      // Check if sender is the owner
+      let isOwner = (message.from === ownerChatId);
+
+      // If using new WhatsApp LID format (@lid), resolve the contact's phone number
+      if (!isOwner && message.from.endsWith('@lid')) {
+        try {
+          const contact = await message.getContact();
+          const contactNumber = (contact.number || '').replace(/[^0-9]/g, '');
+          const ownerDigits = (process.env.OWNER_NUMBER || '').replace(/[^0-9]/g, '');
+          console.log(`[Bot] LID resuelto — contact.number: ${contactNumber}, owner: ${ownerDigits}`);
+          isOwner = (contactNumber === ownerDigits);
+        } catch (e) {
+          console.log(`[Bot] No se pudo resolver LID, aceptando mensaje privado: ${e.message}`);
+          // Accept the message anyway since it's a private chat to the bot
+          isOwner = true;
+        }
+      }
+
+      if (!isOwner) {
+        console.log(`[Bot] Ignorado: ${message.from} no es el dueño`);
         return;
       }
 
